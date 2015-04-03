@@ -11,13 +11,29 @@ module Spree
       def calculate_currencies
         puts "Calculatin currencies"
 
-        # Hardcoding the exchange rates for now
-        usd_to_eur = 0.94
-        usd_to_gbp = 0.68
-        usd_to_mxn = 15.24
-        usd_to_cad = 1.27
+        # TODO: Hardcoding the exchange rates for now, should be fetched later
+        rates = { USD: { EUR: 0.94, GBP: 0.68, MXN: 15.24, CAD: 1.27 } }.deep_stringify_keys
 
+        main_currency = Spree::Config.currency
+        supported_currencies = Spree::Config.supported_currencies.split(', ')
+        supported_currencies.delete(main_currency)
 
+        #Update master variant prices
+        supported_currencies.each do |currency|
+          # we need to change currencies, because price_in.amount= does not seem to work
+          Spree::Config.currency = currency
+          Spree::Product.all.each do |product|
+            main_price = product.price_in(main_currency).amount
+            product.price = rates[main_currency][currency] * main_price
+            product.variants.each do |variant|
+              variant_main_price = variant.price_in(main_currency).amount
+              variant.price = rates[main_currency][currency] * variant_main_price
+              variant.save
+            end
+            product.save
+          end
+        end
+        Spree::Config.currency = main_currency
         head :no_content
 #        render :status => 400
       end

@@ -5,7 +5,7 @@ en:
     prices: Prices
     show_currency_selector: Show Currency Selector
     supported_currencies: Supported Currencies
-    calculate_currencies: Calculate Currencies
+    calculate_currencies: Calculate Prices
     allow_currency_change: Allow Currency Change
     notice:
       prices_saved: Prices successfully saved
