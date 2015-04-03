@@ -8,6 +8,10 @@ module SpreeMultiCurrency
         append_file 'vendor/assets/javascripts/spree/backend/all.js', "//= require spree/backend/spree_multi_currency\n"
       end
 
+      def add_stylesheets
+        append_file 'vendor/assets/stylesheets/spree/backend/all.css', "//= require spree/backend/spree_multi_currency\n"
+      end
+
       def add_migrations
         run 'bundle exec rake railties:install:migrations FROM=spree_multi_currency'
       end

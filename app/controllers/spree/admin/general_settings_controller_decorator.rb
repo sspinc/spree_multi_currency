@@ -8,6 +8,20 @@ module Spree
         super
       end
 
+      def calculate_currencies
+        puts "Calculatin currencies"
+
+        # Hardcoding the exchange rates for now
+        usd_to_eur = 0.94
+        usd_to_gbp = 0.68
+        usd_to_mxn = 15.24
+        usd_to_cad = 1.27
+
+
+        head :no_content
+#        render :status => 400
+      end
+
       private
 
       def update_currency_settings
