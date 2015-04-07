@@ -16,17 +16,19 @@ module Spree
         rates = get_rates(main_currency)
 
         supported_currencies.each do |currency|
-          # we need to change to the currencies, because price_in(currency).amount= does not work
+          # we need to change to all the currencies, because price_in(currency).amount= does not work
           Spree::Config.currency = currency
-          Spree::Product.all.each do |product|
-            main_price = product.price_in(main_currency).amount
-            product.price = round_price(rates[currency] * main_price)
-            product.variants.each do |variant|
-              variant_main_price = variant.price_in(main_currency).amount
-              variant.price = round_price(rates[currency] * variant_main_price)
-              variant.save
+          Spree::Product.transaction do
+            Spree::Product.all.each do |product|
+              main_price = product.price_in(main_currency).amount
+              product.price = round_price(rates[currency] * main_price)
+              product.variants.each do |variant|
+                variant_main_price = variant.price_in(main_currency).amount
+                variant.price = round_price(rates[currency] * variant_main_price)
+                variant.save
+              end
+              product.save
             end
-            product.save
           end
         end
         Spree::Config.currency = main_currency
