@@ -2,7 +2,7 @@
 *= require spree/backend
 */
 
-#calculate_currencies {
+#calculate_prices {
   margin-top: 20px;
 }
 

@@ -8,7 +8,7 @@ Spree::Core::Engine.add_routes do
 
     resource :general_settings do
       collection do
-        post :calculate_currencies
+        post :calculate_prices
       end
     end
   end

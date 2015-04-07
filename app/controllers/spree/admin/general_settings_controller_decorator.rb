@@ -8,9 +8,9 @@ module Spree
         super
       end
 
-      def calculate_currencies
+      def calculate_prices
         main_currency = Spree::Config.currency
-        supported_currencies = Spree::Config.supported_currencies.split(', ')
+        supported_currencies = Spree::Config.supported_currencies.split(',').map(&:strip)
         supported_currencies.delete(main_currency)
 
         rates = get_rates(main_currency)
@@ -64,14 +64,13 @@ module Spree
 
       def round_price(price)
         if Spree::Config.round_calculated_prices
-          decimal_places = price.to_s.split('.').first.length
+          decimal_places = price.to_i.to_s.length
           if decimal_places <= 1
             price.ceil
           elsif decimal_places == 2 or decimal_places == 3
             (price / 5).ceil * 5
           else
-            round_to = 10 ** (decimal_places - 2)
-            (price / round_to).ceil * round_to
+            price.ceil(2 - decimal_places)
           end
         else
           price
