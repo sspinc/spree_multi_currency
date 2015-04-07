@@ -9,25 +9,21 @@ module Spree
       end
 
       def calculate_currencies
-        puts "Calculatin currencies"
-
-        # TODO: Hardcoding the exchange rates for now, should be fetched later
-        rates = { USD: { EUR: 0.94, GBP: 0.68, MXN: 15.24, CAD: 1.27 } }.deep_stringify_keys
-
         main_currency = Spree::Config.currency
         supported_currencies = Spree::Config.supported_currencies.split(', ')
         supported_currencies.delete(main_currency)
 
-        #Update master variant prices
+        rates = get_rates(main_currency)
+
         supported_currencies.each do |currency|
-          # we need to change currencies, because price_in.amount= does not seem to work
+          # we need to change to the currencies, because price_in(currency).amount= does not work
           Spree::Config.currency = currency
           Spree::Product.all.each do |product|
             main_price = product.price_in(main_currency).amount
-            product.price = rates[main_currency][currency] * main_price
+            product.price = round_price(rates[currency] * main_price)
             product.variants.each do |variant|
               variant_main_price = variant.price_in(main_currency).amount
-              variant.price = rates[main_currency][currency] * variant_main_price
+              variant.price = round_price(rates[currency] * variant_main_price)
               variant.save
             end
             product.save
@@ -35,10 +31,50 @@ module Spree
         end
         Spree::Config.currency = main_currency
         head :no_content
-#        render :status => 400
       end
 
       private
+
+      def get_rates(in_currency)
+        eur_rates = {}
+        url = 'http://www.ecb.int/stats/eurofxref/eurofxref-daily.xml'
+        data = Nokogiri::XML.parse(open(url))
+        data.xpath('gesmes:Envelope/xmlns:Cube/xmlns:Cube//xmlns:Cube').each do |exchange_rate|
+           char_code = exchange_rate.attribute('currency').value.to_s.strip
+           value = exchange_rate.attribute('rate').value.to_f
+           eur_rates[char_code] = value
+        end
+        convert_rates(eur_rates, in_currency)
+      end
+
+      def convert_rates(eur_rates, to_currency)
+        if to_currency == 'EUR'
+          return eur_rates
+        end
+        multiplier = eur_rates[to_currency]
+        rates = {}
+        rates['EUR'] = 1 / multiplier
+        eur_rates.each do |char_code, value|
+          rates[char_code] = value / multiplier
+        end
+        return rates
+      end
+
+      def round_price(price)
+        if Spree::Config.round_calculated_prices
+          decimal_places = price.to_s.split('.').first.length
+          if decimal_places <= 1
+            price.ceil
+          elsif decimal_places == 2 or decimal_places == 3
+            (price / 5).ceil * 5
+          else
+            round_to = 10 ** (decimal_places - 2)
+            (price / round_to).ceil * round_to
+          end
+        else
+          price
+        end
+      end
 
       def update_currency_settings
         params.each do |name, value|

@@ -4,7 +4,7 @@ $(@).ready( ->
       type: 'POST'
       url: Spree.pathFor('admin/general_settings/calculate_currencies')
       success: ->
-        show_flash 'success', "Currencies calculated and updated"
+        show_flash 'success', "Succesfully calculated and updated prices "
       error: (msg) ->
         if msg.responseJSON["error"]
           show_flash 'error', msg.responseJSON["error"]
