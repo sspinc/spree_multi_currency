@@ -13,7 +13,7 @@ module Spree
         supported_currencies = Spree::Config.supported_currencies.split(',').map(&:strip)
         supported_currencies.delete(main_currency)
 
-        rates = get_rates(main_currency)
+        rates = get_rates(main_currency, supported_currencies)
 
         supported_currencies.each do |currency|
           # we need to change to all the currencies, because price_in(currency).amount= does not work
@@ -37,27 +37,13 @@ module Spree
 
       private
 
-      def get_rates(in_currency)
-        eur_rates = {}
-        url = 'http://www.ecb.int/stats/eurofxref/eurofxref-daily.xml'
-        data = Nokogiri::XML.parse(open(url))
-        data.xpath('gesmes:Envelope/xmlns:Cube/xmlns:Cube//xmlns:Cube').each do |exchange_rate|
-           char_code = exchange_rate.attribute('currency').value.to_s.strip
-           value = exchange_rate.attribute('rate').value.to_f
-           eur_rates[char_code] = value
-        end
-        convert_rates(eur_rates, in_currency)
-      end
-
-      def convert_rates(eur_rates, to_currency)
-        if to_currency == 'EUR'
-          return eur_rates
-        end
-        multiplier = eur_rates[to_currency]
+      def get_rates(in_currency, currencies)
         rates = {}
-        rates['EUR'] = 1 / multiplier
-        eur_rates.each do |char_code, value|
-          rates[char_code] = value / multiplier
+        currencies.each do |to_currency|
+          doc = Net::HTTP.get('www.google.com', "/finance/converter?a=1&from=#{in_currency}&to=#{to_currency}")
+          regexp = Regexp.new("(\\d+\\.{0,1}\\d*)\\s+#{to_currency}")
+          regexp.match doc
+          rates[to_currency] = $1.to_f
         end
         return rates
       end
