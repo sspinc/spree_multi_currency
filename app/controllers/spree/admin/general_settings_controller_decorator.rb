@@ -19,7 +19,7 @@ module Spree
           # we need to change to all the currencies, because price_in(currency).amount= does not work
           Spree::Config.currency = currency
           Spree::Product.transaction do
-            Spree::Product.all.each do |product|
+            Spree::Product.find_each(batch_size: 300) do |product|
               main_price = product.price_in(main_currency).amount
               product.price = round_price(rates[currency] * main_price)
               product.variants.each do |variant|
@@ -28,7 +28,7 @@ module Spree
                 variant.save
               end
               product.save
-            end
+             end
           end
         end
         Spree::Config.currency = main_currency
