@@ -28,7 +28,7 @@ module Spree
                 variant.save
               end
               product.save
-             end
+            end
           end
         end
         Spree::Config.currency = main_currency
