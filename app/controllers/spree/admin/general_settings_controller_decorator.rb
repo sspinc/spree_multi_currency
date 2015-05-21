@@ -8,6 +8,11 @@ module Spree
         super
       end
 
+      def calculate_prices
+        SpreeMultiCurrency::CurrencyConverter.new.calculate_prices
+        head :no_content
+      end
+
       private
 
       def update_currency_settings
